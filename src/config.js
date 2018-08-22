@@ -1,8 +1,6 @@
 const config = {
   ROMS: {
-    "Bubble Bobble":
-      "https://cors-anywhere.herokuapp.com/http://theromdepot.com/roms/NES/US/Bubble%20Bobble%20(U).nes",
-    Castlevania:
+    /*Castlevania:
       "https://cors-anywhere.herokuapp.com/http://theromdepot.com/roms/NES/US/Castlevania%20(U).nes",
     Contra:
       "https://cors-anywhere.herokuapp.com/http://theromdepot.com/roms/NES/US/Contra%20(U).nes",
@@ -49,9 +47,9 @@ const config = {
     "Tetris 2":
       "https://cors-anywhere.herokuapp.com/http://www.vertigofx.com/public/games/roms/nes/Tetris%202%20(U).nes",
     "Zelda 2":
-      "https://cors-anywhere.herokuapp.com/http://www.vertigofx.com/public/games/roms/nes/Zelda%202%20-%20The%20Adventure%20of%20Link%20(U).nes"
+      "https://cors-anywhere.herokuapp.com/http://www.vertigofx.com/public/games/roms/nes/Zelda%202%20-%20The%20Adventure%20of%20Link%20(U).nes"*/
   },
-  GOOGLE_ANALYTICS_CODE: process.env.REACT_APP_GOOGLE_ANALYTICS_CODE,
+  GOOGLE_ANALYTICS_CODE: "",
   SENTRY_URI: process.env.REACT_APP_SENTRY_URI
 };
 

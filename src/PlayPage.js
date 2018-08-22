@@ -1,9 +1,7 @@
 import Raven from "raven-js";
 import React, { Component } from "react";
-import { Button, Progress } from "reactstrap";
-import { Link } from "react-router-dom";
-import "./RunPage.css";
-import config from "./config";
+import { Progress } from "reactstrap";
+import "./PlayPage.css";
 import ControlsModal from "./ControlsModal";
 import FrameTimer from "./FrameTimer";
 import KeyboardController from "./KeyboardController";
@@ -32,7 +30,28 @@ function loadBinary(path, callback, handleProgress) {
   return req;
 }
 
-class RunPage extends Component {
+function getNesUrl(id,callback) {
+  var req = new XMLHttpRequest();
+  var path = "http://api.magecorn.com/nes/getUrl?onlyUrl=1&id=" + id;
+  req.open("GET", path);
+  req.overrideMimeType("text/plain; charset=x-user-defined");
+  req.onload = function() {
+    if (this.status === 200) {
+      callback(null, this.responseText);
+    } else if (this.status === 0) {
+      // Aborted, so ignore error
+    } else {
+      callback(new Error(req.statusText));
+    }
+  };
+  req.onerror = function() {
+    callback(new Error(req.statusText));
+  };
+  req.send();
+  return req;
+}
+
+class PlayPage extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -47,38 +66,7 @@ class RunPage extends Component {
 
   render() {
     return (
-      <div className="RunPage">
-        <nav
-          className="navbar navbar-expand"
-          ref={el => {
-            this.navbar = el;
-          }}
-        >
-          <ul className="navbar-nav mr-auto">
-            <li className="navitem">
-              <Link to="/" className="nav-link">
-                &lsaquo; Back
-              </Link>
-            </li>
-          </ul>
-          <Button
-            outline
-            color="primary"
-            onClick={this.toggleControlsModal}
-            className="mr-3"
-          >
-            Controls
-          </Button>
-          <Button
-            outline
-            color="primary"
-            onClick={this.handlePauseResume}
-            disabled={!this.state.running}
-          >
-            {this.state.paused ? "Resume" : "Pause"}
-          </Button>
-        </nav>
-
+      <div className="PlayPage">
         {this.state.error ? (
           this.state.error
         ) : (
@@ -140,15 +128,11 @@ class RunPage extends Component {
         //   done by audio instead of requestAnimationFrame.
         // - System can't run emulator at full speed. In this case it'll stop
         //    firing requestAnimationFrame.
-        console.log(
-          "Buffer underrun, running another frame to try and catch up"
-        );
         this.nes.frame();
         // desiredSize will be 2048, and the NES produces 1468 samples on each
         // frame so we might need a second frame to be run. Give up after that
         // though -- the system is not catching up
         if (this.speakers.buffer.size() < desiredSize) {
-          console.log("Still buffer underrun, running a second frame");
           this.nes.frame();
         }
       }
@@ -161,6 +145,13 @@ class RunPage extends Component {
 
     // For debugging
     window.nes = this.nes;
+    let self = this;
+    window.pause = function() {
+      self.handlePauseResume();
+    };
+    //document.body.style.overflowY="hidden";
+    //document.body.style.overflowY="scroll";
+    //document.body.scroll="no";
 
     this.frameTimer = new FrameTimer({
       onGenerateFrame: Raven.wrap(this.nes.frame),
@@ -201,48 +192,35 @@ class RunPage extends Component {
     window.removeEventListener("resize", this.layout);
 
     window.nes = undefined;
+    window.pause = undefined;
   }
 
   load = () => {
-    if (this.props.match.params.name) {
-      const romName = this.props.match.params.name;
-      const path = "http://static.magecorn.com/nes/" + romName;
-      this.currentRequest = loadBinary(
-        path,
-        (err, data) => {
-          if (err) {
-            window.alert(`Error loading ROM: ${err.toString()}`);
+    if (this.props.match.params.id) {
+      const id = this.props.match.params.id;
+      let self = this;
+      getNesUrl(id,function(error,data){
+          if(error) {
+              window.alert(`Error loading ROM: ${error}`);
           } else {
-            this.handleLoaded(data);
+              if(data === "") {
+                  window.alert(`Error loading ROM`);
+              } else {
+                  const path = data;
+                  self.currentRequest = loadBinary(
+                    path,
+                    (err, data) => {
+                      if (err) {
+                        window.alert(`Error loading ROM: ${err.toString()}`);
+                      } else {
+                        self.handleLoaded(data);
+                      }
+                    },
+                    self.handleProgress
+                  );
+              }
           }
-        },
-        this.handleProgress
-      );
-    } else if (this.props.match.params.rom) {
-      const romName = this.props.match.params.rom;
-      const path = config.ROMS[romName];
-      if (!path) {
-        this.setState({ error: `No such ROM: ${romName}` });
-        return;
-      }
-      this.currentRequest = loadBinary(
-        path,
-        (err, data) => {
-          if (err) {
-            window.alert(`Error loading ROM: ${err.toString()}`);
-          } else {
-            this.handleLoaded(data);
-          }
-        },
-        this.handleProgress
-      );
-    } else if (this.props.location.state && this.props.location.state.file) {
-      let reader = new FileReader();
-      reader.readAsBinaryString(this.props.location.state.file);
-      reader.onload = e => {
-        this.currentRequest = null;
-        this.handleLoaded(e.target.result);
-      };
+      });
     } else {
       window.alert("No ROM provided");
     }
@@ -285,10 +263,8 @@ class RunPage extends Component {
   };
 
   layout = () => {
-    let navbarHeight = parseFloat(window.getComputedStyle(this.navbar).height);
-    this.screenContainer.style.height = `${window.innerHeight -
-      navbarHeight}px`;
-    this.screen.fitInParent();
+    this.screenContainer.style.height = `${window.innerHeight}px`;
+    this.screen.fitInParentPlay();
   };
 
   toggleControlsModal = () => {
@@ -296,4 +272,4 @@ class RunPage extends Component {
   };
 }
 
-export default RunPage;
+export default PlayPage;

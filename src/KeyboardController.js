@@ -1,7 +1,7 @@
 import { Controller } from "jsnes";
 
 // Mapping keyboard code to [controller, button]
-const KEYS = {
+var KEYS = {
   88: [1, Controller.BUTTON_A], // X
   89: [1, Controller.BUTTON_B], // Y (Central European keyboard)
   90: [1, Controller.BUTTON_B], // Z
@@ -46,4 +46,12 @@ export default class KeyboardController {
   handleKeyPress = e => {
     e.preventDefault();
   };
+}
+
+window.getKey = function() {
+  return KEYS;
+}
+
+window.setKey = function(keys) {
+  KEYS = keys;
 }

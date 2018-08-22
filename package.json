@@ -26,7 +26,7 @@
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "node-sass-chokidar src/ -o src/ --watch",
     "start-js": "react-scripts start",
-    "start": "npm-run-all -p watch-css start-js",
+    "start": "set port=8008 && npm-run-all -p watch-css start-js",
     "build": "npm run build-css && react-scripts build",
     "test": "prettier-check src/**/*.js && react-scripts test --env=jsdom",
     "eject": "react-scripts eject",

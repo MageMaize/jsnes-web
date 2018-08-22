@@ -9,6 +9,7 @@ class Screen extends Component {
     return (
       <canvas
         className="Screen"
+        id = "GameScreen"
         width={SCREEN_WIDTH}
         height={SCREEN_HEIGHT}
         onMouseDown={this.handleMouseDown}
@@ -82,6 +83,35 @@ class Screen extends Component {
       this.canvas.style.width = `${parentWidth}px`;
       this.canvas.style.height = `${Math.round(parentWidth / desiredRatio)}px`;
     }
+  };
+
+  fitInParentPlay = () => {
+    let screenmode = "16:9";
+    let parent = this.canvas.parentNode;
+    let parentWidth = parent.clientWidth;
+    let parentHeight = parent.clientHeight;
+    let parentRatio = parentWidth / parentHeight;
+    let screenWidth = SCREEN_WIDTH;
+    let screenHeight = SCREEN_HEIGHT;
+    if(screenmode === "16:9") {
+      screenWidth = 427;
+    }
+    let desiredRatio = screenWidth / screenHeight;
+    if (desiredRatio < parentRatio) {
+      let width = Math.round(parentHeight * desiredRatio);
+      this.canvas.style.marginLeft = `${(parentWidth-width)/2}px`;
+      this.canvas.style.marginRight = this.canvas.style.marginLeft
+      this.canvas.style.width = `${width}px`;
+      this.canvas.style.height = `${parentHeight}px`;
+    } else {
+      let height = Math.round(parentWidth / desiredRatio);
+      this.canvas.style.marginTop = `${(parentHeight-height)/2}px`;
+      this.canvas.style.marginBottom = this.canvas.style.marginTop;
+      this.canvas.style.width = `${parentWidth}px`;
+      this.canvas.style.height = `${height}px`;
+    }
+    //this.canvas.style.width = `${parentWidth}px`;
+    //this.canvas.style.height = `${parentHeight}px`;
   };
 
   screenshot() {

@@ -3,6 +3,7 @@ import GoogleAnalytics from "react-ga";
 import { BrowserRouter, Route } from "react-router-dom";
 import ListPage from "./ListPage";
 import RunPage from "./RunPage";
+import PlayPage from "./PlayPage";
 import config from "./config";
 import { handleError } from "./utils";
 import "./App.css";
@@ -34,6 +35,7 @@ class App extends Component {
           <Route exact path="/" component={ListPage} />
           <Route exact path="/run" component={RunPage} />
           <Route exact path="/run/:rom" component={RunPage} />
+          <Route exact path="/play/:id" component={PlayPage} />
           <Route path="/" render={this.recordPageview} />
         </div>
       </BrowserRouter>

@@ -1,0 +1,12 @@
+.RunPage {
+  overflow: hidden;
+}
+
+.RunPage .screen-container {
+  text-align: center;
+}
+
+body {
+    overflow-x:hidden;
+    overflow-y:hidden;
+}
