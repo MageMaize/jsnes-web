@@ -114,6 +114,11 @@ class PlayPage extends Component {
     );
   }
 
+  sendMsgToTopWindow = (msg) => {
+    if(window.top.location === window.self.location) return;
+    window.parent.postMessage(msg,"*");
+  }
+
   componentDidMount() {
     this.speakers = new Speakers({
       onBufferUnderrun: (actualSize, desiredSize) => {
@@ -137,6 +142,7 @@ class PlayPage extends Component {
         }
       }
     });
+
     this.nes = new NES({
       onFrame: this.screen.setBuffer,
       onStatusUpdate: console.log,
@@ -158,9 +164,12 @@ class PlayPage extends Component {
       onWriteFrame: Raven.wrap(this.screen.writeBuffer)
     });
 
+    window.addEventListener("message",this.onWindowMessage);
+
     this.keyboardController = new KeyboardController({
       onButtonDown: this.nes.buttonDown,
-      onButtonUp: this.nes.buttonUp
+      onButtonUp: this.nes.buttonUp,
+      playPage: this,
     });
     document.addEventListener("keydown", this.keyboardController.handleKeyDown);
     document.addEventListener("keyup", this.keyboardController.handleKeyUp);
@@ -180,6 +189,9 @@ class PlayPage extends Component {
       this.currentRequest.abort();
     }
     this.stop();
+
+    window.removeEventListener("message",this.onWindowMessage);
+
     document.removeEventListener(
       "keydown",
       this.keyboardController.handleKeyDown
@@ -242,14 +254,17 @@ class PlayPage extends Component {
     this.frameTimer.start();
     this.speakers.start();
     this.fpsInterval = setInterval(() => {
-      console.log(`FPS: ${this.nes.getFPS()}`);
+      //console.log(`FPS: ${this.nes.getFPS()}`);
+      this.sendMsgToTopWindow({type:"fps",value:this.nes.getFPS()});
     }, 1000);
+    this.sendMsgToTopWindow({type:"pause",state:"play"});
   };
 
   stop = () => {
     this.frameTimer.stop();
     this.speakers.stop();
     clearInterval(this.fpsInterval);
+    this.sendMsgToTopWindow({type:"pause",state:"pause"});
   };
 
   handlePauseResume = () => {
@@ -261,6 +276,23 @@ class PlayPage extends Component {
       this.stop();
     }
   };
+
+  onWindowMessage = (e)=> {
+    let data = e.data;
+    if(!data.type) return;
+    switch(data.type) {
+      case "pause":
+        this.handlePauseResume();
+      break;
+
+      case "screen_mode" :
+        this.screen.setScreenMode(data.mode);
+      break;
+      
+      default :
+      break;
+    }
+  }
 
   layout = () => {
     this.screenContainer.style.height = `${window.innerHeight}px`;
