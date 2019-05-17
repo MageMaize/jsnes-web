@@ -32,7 +32,7 @@ function loadBinary(path, callback, handleProgress) {
 
 function getNesUrl(id,callback) {
   var req = new XMLHttpRequest();
-  var path = "http://api.magecorn.com/nes/getUrl?onlyUrl=1&id=" + id;
+  var path = "http://api.magecorn.com/nes/getUrl?test=1&onlyUrl=1&id=" + id;
   req.open("GET", path);
   req.overrideMimeType("text/plain; charset=x-user-defined");
   req.onload = function() {

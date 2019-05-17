@@ -11,5 +11,4 @@ if (config.SENTRY_URI) {
 
 Raven.context(function() {
   ReactDOM.render(<App />, document.getElementById("root"));
-  
 });

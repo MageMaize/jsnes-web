@@ -18,13 +18,19 @@ export default class FrameTimer {
     this.running = false;
 
     // Bodge mode and calibration
-    this.bodgeMode = false;
+    this.bodgeMode = true;
+    this.isFixedBodgeMode = true;
 
     // Calibration config
     this.desiredFPS = 60;
     this.calibrationDelay = 200; // time to wait before starting
     this.calibrationFrames = 10; // number of frames to calibrate with
     this.calibrationTolerance = 5; // +/- desired FPS to consider correct
+
+    
+    this.smallMs = 16;
+    this.bigMs = 17;
+    this.smallMsFlag = false;
 
     // Calibration state
     this.calibrating = false;
@@ -45,13 +51,25 @@ export default class FrameTimer {
   start() {
     this.running = true;
     this.requestAnimationFrame();
-    if (this.bodgeMode) this.startBodgeMode();
+    if (this.bodgeMode) {
+      if(this.isFixedBodgeMode) {
+        this.startFixedBodgeMode();
+      } else {
+        this.startBodgeMode();
+      }
+    }
   }
 
   stop() {
     this.running = false;
     if (this._requestID) window.cancelAnimationFrame(this._requestID);
-    if (this.bodgeInterval) clearInterval(this.bodgeInterval);
+    if (this.bodgeInterval) {
+      if(this.isFixedBodgeMode) {
+        clearTimeout(this.bodgeInterval);
+      } else {
+        clearInterval(this.bodgeInterval);
+      }
+    }
   }
 
   requestAnimationFrame() {
@@ -104,9 +122,19 @@ export default class FrameTimer {
     this.bodgeInterval = setInterval(this.onBodge, 1000 / this.desiredFPS);
   };
 
+  startFixedBodgeMode = () => {
+    this.bodgeMode = true;
+    this.bodgeInterval = setTimeout(this.onBodge, this.smallMs);
+  }
+
   onBodge = () => {
     if (this.running) {
       this.onGenerateFrame();
+    }
+    if(this.isFixedBodgeMode) {
+      clearTimeout(this.bodgeInterval);
+      this.bodgeInterval = setTimeout(this.onBodge, this.smallMsFlag ? this.smallMs : this.bigMs);
+      this.smallMsFlag = !this.smallMsFlag;
     }
   };
 }
