@@ -5,6 +5,7 @@ const SCREEN_WIDTH = 256;
 const SCREEN_HEIGHT = 240;
 
 class Screen extends Component {
+  ScreenMode = "16:9";
   render() {
     return (
       <canvas
@@ -86,30 +87,52 @@ class Screen extends Component {
   };
 
   fitInParentPlay = () => {
-    let screenmode = "16:9";
+    let screenRatio = 0;
+    if(this.ScreenMode === "16:9") {
+      screenRatio = 16 / 9;
+    } else {
+      screenRatio = 4 / 3;
+    }
     let parent = this.canvas.parentNode;
     let parentWidth = parent.clientWidth;
     let parentHeight = parent.clientHeight;
     let parentRatio = parentWidth / parentHeight;
-    let screenWidth = SCREEN_WIDTH;
-    let screenHeight = SCREEN_HEIGHT;
-    if(screenmode === "16:9") {
-      screenWidth = 427;
-    }
-    let desiredRatio = screenWidth / screenHeight;
-    if (desiredRatio < parentRatio) {
-      let width = Math.round(parentHeight * desiredRatio);
-      this.canvas.style.marginLeft = `${(parentWidth-width)/2}px`;
-      this.canvas.style.marginRight = this.canvas.style.marginLeft
-      this.canvas.style.width = `${width}px`;
-      this.canvas.style.height = `${parentHeight}px`;
-    } else {
-      let height = Math.round(parentWidth / desiredRatio);
-      this.canvas.style.marginTop = `${(parentHeight-height)/2}px`;
+
+    if(parentRatio >= screenRatio) {
+      let w = screenRatio * parentHeight;
+      this.canvas.style.marginTop = `0px`;
       this.canvas.style.marginBottom = this.canvas.style.marginTop;
+      this.canvas.style.height = `${parentHeight}px`;
+      this.canvas.style.width = `${w}px`;
+      let marginLR = (parentWidth - w) / 2;
+      this.canvas.style.marginLeft = `${marginLR}px`;
+      this.canvas.style.marginRight = this.canvas.style.marginLeft;
+    } else {
+      let h = parentWidth/screenRatio;
+      this.canvas.style.marginLeft = `0px`;
+      this.canvas.style.marginRight = this.canvas.style.marginLeft;
       this.canvas.style.width = `${parentWidth}px`;
-      this.canvas.style.height = `${height}px`;
+      this.canvas.style.height = `${h}px`;
+      let marginTB = (parentHeight - h) / 2;
+      this.canvas.style.marginTop = `${marginTB}px`;
+      this.canvas.style.marginBottom = this.canvas.style.marginTop;
     }
+
+    
+    // let desiredRatio = screenWidth / screenHeight;
+    // if (desiredRatio < parentRatio) {
+    //   let width = Math.round(parentHeight * desiredRatio);
+    //   this.canvas.style.marginLeft = `${(parentWidth-width)/2}px`;
+    //   this.canvas.style.marginRight = this.canvas.style.marginLeft
+    //   this.canvas.style.width = `${width}px`;
+    //   this.canvas.style.height = `${parentHeight}px`;
+    // } else {
+    //   let height = Math.round(parentWidth / desiredRatio);
+    //   this.canvas.style.marginTop = `${(parentHeight-height)/2}px`;
+    //   this.canvas.style.marginBottom = this.canvas.style.marginTop;
+    //   this.canvas.style.width = `${parentWidth}px`;
+    //   this.canvas.style.height = `${height}px`;
+    // }
     //this.canvas.style.width = `${parentWidth}px`;
     //this.canvas.style.height = `${parentHeight}px`;
   };
@@ -129,6 +152,11 @@ class Screen extends Component {
     let y = Math.round((e.clientY - rect.top) * scale);
     this.props.onMouseDown(x, y);
   };
+
+  setScreenMode = (mode) => {
+    this.ScreenMode = mode;
+    this.fitInParentPlay();
+  }
 }
 
 export default Screen;
