@@ -49,7 +49,7 @@ const config = {
     "Zelda 2":
       "https://cors-anywhere.herokuapp.com/http://www.vertigofx.com/public/games/roms/nes/Zelda%202%20-%20The%20Adventure%20of%20Link%20(U).nes"*/
   },
-  GOOGLE_ANALYTICS_CODE: "",
+  //GOOGLE_ANALYTICS_CODE: "",
   SENTRY_URI: process.env.REACT_APP_SENTRY_URI
 };
 

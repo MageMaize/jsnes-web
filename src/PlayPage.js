@@ -2,7 +2,6 @@ import Raven from "raven-js";
 import React, { Component } from "react";
 import { Progress } from "reactstrap";
 import "./PlayPage.css";
-import ControlsModal from "./ControlsModal";
 import FrameTimer from "./FrameTimer";
 import KeyboardController from "./KeyboardController";
 import Screen from "./Screen";
@@ -32,8 +31,8 @@ function loadBinary(path, callback, handleProgress) {
 
 function getNesUrl(id,callback) {
   var req = new XMLHttpRequest();
-  var path = "http://api.magecorn.com/nes/getUrl?test=1&onlyUrl=1&id=" + id;
-  req.open("GET", path);
+  var path = "http://api.magecorn.com/nes/getUrl";
+  req.open("POST", path);
   req.overrideMimeType("text/plain; charset=x-user-defined");
   req.onload = function() {
     if (this.status === 200) {
@@ -47,7 +46,7 @@ function getNesUrl(id,callback) {
   req.onerror = function() {
     callback(new Error(req.statusText));
   };
-  req.send();
+  req.send(`{"onlyUrl":1,"id":${id}}`);
   return req;
 }
 
@@ -103,10 +102,6 @@ class PlayPage extends Component {
                 // console.log("mouseUp")
                 this.nes.zapperFireUp();
               }}
-            />
-            <ControlsModal
-              isOpen={this.state.controlsModal}
-              toggle={this.toggleControlsModal}
             />
           </div>
         )}
@@ -287,6 +282,13 @@ class PlayPage extends Component {
 
       case "screen_mode" :
         this.screen.setScreenMode(data.mode);
+      break;
+
+      case "screenshot" :
+        if(!this.state.paused) {
+          let imgSrc = this.screen.screenshotData();
+          this.sendMsgToTopWindow({type:"screenshot",img:imgSrc});
+        }
       break;
       
       default :

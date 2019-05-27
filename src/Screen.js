@@ -143,6 +143,10 @@ class Screen extends Component {
     return img;
   }
 
+  screenshotData() {
+    return this.canvas.toDataURL("image/png");
+  }
+
   handleMouseDown = e => {
     if (!this.props.onMouseDown) return;
     // Make coordinates unscaled
