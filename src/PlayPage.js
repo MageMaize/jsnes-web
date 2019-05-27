@@ -51,6 +51,7 @@ function getNesUrl(id,callback) {
 }
 
 class PlayPage extends Component {
+  gameSaveDat = null;
   constructor(props) {
     super(props);
     this.state = {
@@ -241,6 +242,7 @@ class PlayPage extends Component {
 
   handleLoaded = data => {
     this.setState({ uiEnabled: true, running: true, loading: false });
+    this.gameSaveDat = null;
     this.nes.loadROM(data);
     this.start();
   };
@@ -289,6 +291,52 @@ class PlayPage extends Component {
           let imgSrc = this.screen.screenshotData();
           this.sendMsgToTopWindow({type:"screenshot",img:imgSrc});
         }
+      break;
+
+      case "reset" :
+        this.nes.reloadROM();
+      break;
+
+      case "loadFormJSON": {
+        //this.nes.fromJSON(JSON.parse(data.json));
+        let __nesdata = JSON.parse(data.json);
+        this.nes.cpu.fromJSON(__nesdata.cpu);
+        this.nes.mmap.fromJSON(__nesdata.mmap);
+        this.nes.ppu.fromJSON(__nesdata.ppu);
+      }
+      break;
+
+      case "saveToJSON": {
+        let __nesdata = {
+          cpu: this.nes.cpu.toJSON(),
+          mmap: this.nes.mmap.toJSON(),
+          ppu: this.nes.ppu.toJSON()
+        };
+        var json = JSON.stringify(__nesdata);
+        //let json = JSON.stringify(this.nes.toJSON());
+        this.sendMsgToTopWindow({type:"saveToJSON",json:json});
+      }
+      break;
+
+      case "quickLoad":{
+        if(this.gameSaveDat == null) break;
+        let d = JSON.parse(this.gameSaveDat);
+        this.nes.cpu.fromJSON(d.cpu);
+        this.nes.mmap.fromJSON(d.mmap);
+        this.nes.ppu.fromJSON(d.ppu);
+      }
+      break;
+
+      case "quickSave":{
+        this.stop();
+          let __nesdata = {
+            cpu: this.nes.cpu.toJSON(),
+            mmap: this.nes.mmap.toJSON(),
+            ppu: this.nes.ppu.toJSON()
+          };
+          this.gameSaveDat = JSON.stringify(__nesdata);
+          this.start();
+      }
       break;
       
       default :
