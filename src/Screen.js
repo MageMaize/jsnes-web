@@ -3,6 +3,7 @@ import "./Screen.css";
 
 const SCREEN_WIDTH = 256;
 const SCREEN_HEIGHT = 240;
+const SCREEN_PADDING = 8;
 
 class Screen extends Component {
   ScreenMode = "16:9";
@@ -11,8 +12,8 @@ class Screen extends Component {
       <canvas
         className="Screen"
         id = "GameScreen"
-        width={SCREEN_WIDTH}
-        height={SCREEN_HEIGHT}
+        width={SCREEN_WIDTH - SCREEN_PADDING * 2}
+        height={SCREEN_HEIGHT - SCREEN_PADDING * 2}
         onMouseDown={this.handleMouseDown}
         onMouseUp={this.props.onMouseUp}
         ref={canvas => {
@@ -68,7 +69,7 @@ class Screen extends Component {
 
   writeBuffer = () => {
     this.imageData.data.set(this.buf8);
-    this.context.putImageData(this.imageData, 0, 0);
+    this.context.putImageData(this.imageData, -SCREEN_PADDING, -SCREEN_PADDING);
   };
 
   fitInParent = () => {

@@ -169,10 +169,7 @@ class PlayPage extends Component {
     });
     document.addEventListener("keydown", this.keyboardController.handleKeyDown);
     document.addEventListener("keyup", this.keyboardController.handleKeyUp);
-    document.addEventListener(
-      "keypress",
-      this.keyboardController.handleKeyPress
-    );
+    document.addEventListener("keypress",this.keyboardController.handleKeyPress);
 
     window.addEventListener("resize", this.layout);
     this.layout();
