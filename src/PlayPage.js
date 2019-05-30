@@ -52,8 +52,8 @@ function getNesUrl(id,callback) {
 
 class PlayPage extends Component {
   gameSaveDat = null;
-  gameRecordDat = null;
-  playMode = "Record";
+  gameRecordData = null;
+  playMode = "Normal";
   constructor(props) {
     super(props);
     this.state = {
@@ -152,6 +152,7 @@ class PlayPage extends Component {
 
     // For debugging
     window.nes = this.nes;
+    window.page = this;
     let self = this;
     window.pause = function() {
       self.handlePauseResume();
@@ -187,38 +188,37 @@ class PlayPage extends Component {
     
     switch(this.playMode) {
       case "Normal": {
-        if(this.gameRecordDat) {
-          this.gameRecordDat = null;
-        }
+        /*if(this.gameRecordData) {
+          this.gameRecordData = null;
+        }*/
         break;
       }
       
 
       case "Record": {
         let controller = nes.controllers[1];
-        if(nes.frameCount === 0) {
-          this.gameRecordDat = [];
-        }
-        
         let value = 0x00;
         for(let i = 0;i < 8;i ++) {
           if(controller.state[i] === 0x41) {
             // 按键按下
             let keyV = 1 << (7 - i);
             value = value | keyV;
-          } else if(controller.state[i] === 0x40) {
-            // 按键放开
-
           }
         }
-        this.gameRecordDat[nes.frameCount] = value;
+        this.gameRecordData[nes.frameCount] = value;
         break;
       }  
       
 
       case "Play": {
+        if(nes.frameCount >= this.gameRecordData.length) {
+          this.playMode = "Normal";
+          this.reset();
+          this.sendMsgToTopWindow({type:"record-play-finish"});
+          break;
+        }
         let controller = nes.controllers[1];
-        let value = this.gameRecordDat[nes.frameCount];
+        let value = this.gameRecordData[nes.frameCount];
         for(let i = 0;i < 8;i ++) {
           let keyV = 1 << (7 - i);
           keyV = keyV & value;
@@ -249,7 +249,10 @@ class PlayPage extends Component {
     }
     this.stop();
 
-    window.removeEventListener("message",this.onWindowMessage);
+    let _self = this;
+    window.removeEventListener("message",(e) => {
+      _self.onWindowMessage(e)
+    });
 
     document.removeEventListener(
       "keydown",
@@ -321,6 +324,17 @@ class PlayPage extends Component {
     this.sendMsgToTopWindow({type:"pause",state:"play"});
   };
 
+  reset = () => {
+    if (this.nes.romData !== null) {
+      this.nes.reset();
+      this.nes.mmap = this.nes.rom.createMapper();
+      this.nes.mmap.loadROM();
+      this.nes.ppu.setMirroring(this.nes.rom.getMirroringType());
+      this.stop();
+      this.start();
+    }
+  }
+
   stop = () => {
     this.frameTimer.stop();
     this.speakers.stop();
@@ -358,7 +372,27 @@ class PlayPage extends Component {
       break;
 
       case "reset" :
-        this.nes.reloadROM();
+        this.reset();
+      break;
+
+      case "start-record":
+        if(this.playMode !== "Normal") return;
+        this.gameRecordData = [];
+        this.reset();
+        this.playMode = "Record";
+      break;
+
+      case "stop-record":
+        if(this.playMode !== "Record") return;
+        this.playMode = "Normal";
+        this.sendMsgToTopWindow({type:"record-data",data:this.getRecordData()});
+      break;
+
+      case "play-record":
+        if(this.playMode === "Record") return;
+        this.setRecordData(data.data);
+        this.reset();
+        this.playMode = "Play";
       break;
 
       case "loadFormJSON": {
@@ -415,6 +449,31 @@ class PlayPage extends Component {
 
   toggleControlsModal = () => {
     this.setState({ controlsModal: !this.state.controlsModal });
+  };
+
+
+  getRecordData = () => {
+    if(this.gameRecordData == null) return null;
+    let array = this.gameRecordData.concat();
+    let json = {};
+    json["data"] = array;
+    /*let leng = this.gameRecordData.length;
+    let buf = "";
+    for(let i = 0;i < leng;i ++) {
+      buf += String.fromCharCode(this.gameRecordData[i]);
+    }*/
+    let buf = JSON.stringify(json);
+    return buf;
+  };
+
+  setRecordData = (data) => {
+    if(this.playMode === "Record") return;
+    let json = JSON.parse(data);
+    this.gameRecordData = json["data"];
+    /*let leng = data.length;
+    for(let i = 0;i < leng;i ++) {
+      this.gameRecordData.push(data[i].charCodeAt());
+    }*/
   };
 }
 
