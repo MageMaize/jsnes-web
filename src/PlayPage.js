@@ -52,6 +52,8 @@ function getNesUrl(id,callback) {
 
 class PlayPage extends Component {
   gameSaveDat = null;
+  gameRecordDat = null;
+  playMode = "Record";
   constructor(props) {
     super(props);
     this.state = {
@@ -142,7 +144,10 @@ class PlayPage extends Component {
     this.nes = new NES({
       onFrame: this.screen.setBuffer,
       onStatusUpdate: console.log,
-      onAudioSample: this.speakers.writeSample
+      onAudioSample: this.speakers.writeSample,
+      onFrameBegin: this.onFrameBegin,
+      onFrameEnd: this.onFrameEnd,
+      frameCaller: this,
     });
 
     // For debugging
@@ -175,6 +180,67 @@ class PlayPage extends Component {
     this.layout();
 
     this.load();
+  }
+
+  onFrameBegin() {
+    let nes = this.nes;
+    
+    switch(this.playMode) {
+      case "Normal": {
+        if(this.gameRecordDat) {
+          this.gameRecordDat = null;
+        }
+        break;
+      }
+      
+
+      case "Record": {
+        let controller = nes.controllers[1];
+        if(nes.frameCount === 0) {
+          this.gameRecordDat = [];
+        }
+        
+        let value = 0x00;
+        for(let i = 0;i < 8;i ++) {
+          if(controller.state[i] === 0x41) {
+            // 按键按下
+            let keyV = 1 << (7 - i);
+            value = value | keyV;
+          } else if(controller.state[i] === 0x40) {
+            // 按键放开
+
+          }
+        }
+        this.gameRecordDat[nes.frameCount] = value;
+        break;
+      }  
+      
+
+      case "Play": {
+        let controller = nes.controllers[1];
+        let value = this.gameRecordDat[nes.frameCount];
+        for(let i = 0;i < 8;i ++) {
+          let keyV = 1 << (7 - i);
+          keyV = keyV & value;
+          if(keyV > 0) {
+            controller.state[i] = 0x41;
+          } else {
+            controller.state[i] = 0x40;
+          }
+        }
+        break;
+      }
+      
+
+      default:
+
+      break;
+    }
+
+  }
+
+  onFrameEnd() {
+    
   }
 
   componentWillUnmount() {
@@ -211,7 +277,8 @@ class PlayPage extends Component {
               if(data === "") {
                   window.alert(`Error loading ROM`);
               } else {
-                  const path = data;
+                  //const path = data;
+                  const path = "http://nesplay.magecorn.net:8008/1943.nes";
                   self.currentRequest = loadBinary(
                     path,
                     (err, data) => {
