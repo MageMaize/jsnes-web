@@ -54,6 +54,8 @@ class PlayPage extends Component {
   gameSaveDat = null;
   gameRecordData = null;
   playMode = "Normal";
+  ramGetters = {};
+  ppuGetters = {};
   constructor(props) {
     super(props);
     this.state = {
@@ -240,8 +242,33 @@ class PlayPage extends Component {
   }
 
   onFrameEnd() {
-    
+    let nes = this.nes;
+
+    let ramData = null;
+    for(let key in this.ramGetters) {
+      if(ramData === null) ramData = {};
+      let flag = key;
+      let offset = this.ramGetters[key][0];
+      let length = this.ramGetters[key][1];
+      ramData[flag] = nes.cpu.mem.slice(offset,offset+length);
+    }
+    if(ramData !== null) {
+      this.sendMsgToTopWindow({type:"ram-data",data:ramData});
+    }
+
+    let ppuData = null;
+    for(let key in this.ppuGetters) {
+      if(ppuData === null) ppuData = {};
+      let flag = key;
+      let offset = this.ppuGetters[key][0];
+      let length = this.ppuGetters[key][1];
+      ppuData[flag] = nes.ppu.vramMem.slice(offset,offset+length);
+    }
+    if(ppuData !== null) {
+      this.sendMsgToTopWindow({type:"ppu-data",data:ppuData});
+    }
   }
+
 
   componentWillUnmount() {
     if (this.currentRequest) {
@@ -312,6 +339,7 @@ class PlayPage extends Component {
     this.gameSaveDat = null;
     this.nes.loadROM(data);
     this.start();
+    this.sendMsgToTopWindow({type:"game-loaded"});
   };
 
   start = () => {
@@ -436,6 +464,32 @@ class PlayPage extends Component {
           this.start();
       }
       break;
+
+      case "regist-ram-getter": {
+        if(this.ramGetters[data.flag]) break;
+        this.ramGetters[data.flag] = [data.offset,data.length];
+        break;
+      }
+
+      case "unregist-ram-getter": {
+        if(this.ramGetters[data.flag]) {
+          delete this.ramGetters[data.flag];
+        }
+        break;
+      }
+
+      case "regist-ppu-getter": {
+        if(this.ppuGetters[data.flag]) break;
+        this.ppuGetters[data.flag] = [data.offset,data.length];
+        break;
+      }
+
+      case "unregist-ppu-getter": {
+        if(this.ppuGetters[data.flag]) {
+          delete this.ppuGetters[data.flag];
+        }
+        break;
+      }
       
       default :
       break;
