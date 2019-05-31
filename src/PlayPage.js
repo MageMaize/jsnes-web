@@ -56,6 +56,7 @@ class PlayPage extends Component {
   playMode = "Normal";
   ramGetters = {};
   ppuGetters = {};
+  
   constructor(props) {
     super(props);
     this.state = {
@@ -155,10 +156,7 @@ class PlayPage extends Component {
     // For debugging
     window.nes = this.nes;
     window.page = this;
-    let self = this;
-    window.pause = function() {
-      self.handlePauseResume();
-    };
+
     //document.body.style.overflowY="hidden";
     //document.body.style.overflowY="scroll";
     //document.body.scroll="no";
@@ -185,14 +183,17 @@ class PlayPage extends Component {
     this.load();
   }
 
+  updatPlayMode(mode) {
+    this.playMode = mode;
+    this.sendMsgToTopWindow({type:"update-play-mode",mode:this.playMode});
+  }
+
   onFrameBegin() {
     let nes = this.nes;
     
     switch(this.playMode) {
       case "Normal": {
-        /*if(this.gameRecordData) {
-          this.gameRecordData = null;
-        }*/
+        
         break;
       }
       
@@ -214,7 +215,7 @@ class PlayPage extends Component {
 
       case "Play": {
         if(nes.frameCount >= this.gameRecordData.length) {
-          this.playMode = "Normal";
+          this.updatPlayMode("Normal");
           this.reset();
           this.sendMsgToTopWindow({type:"record-play-finish"});
           break;
@@ -343,10 +344,11 @@ class PlayPage extends Component {
   };
 
   start = () => {
+    //if(!this.state.paused) return ;
+    this.setState({ paused: false });
     this.frameTimer.start();
     this.speakers.start();
     this.fpsInterval = setInterval(() => {
-      //console.log(`FPS: ${this.nes.getFPS()}`);
       this.sendMsgToTopWindow({type:"fps",value:this.nes.getFPS()});
     }, 1000);
     this.sendMsgToTopWindow({type:"pause",state:"play"});
@@ -358,12 +360,14 @@ class PlayPage extends Component {
       this.nes.mmap = this.nes.rom.createMapper();
       this.nes.mmap.loadROM();
       this.nes.ppu.setMirroring(this.nes.rom.getMirroringType());
-      this.stop();
-      this.start();
+      //this.stop();
+      //this.start();
     }
   }
 
   stop = () => {
+    //if(this.state.paused) return ;
+    this.setState({ paused: true });
     this.frameTimer.stop();
     this.speakers.stop();
     clearInterval(this.fpsInterval);
@@ -372,10 +376,8 @@ class PlayPage extends Component {
 
   handlePauseResume = () => {
     if (this.state.paused) {
-      this.setState({ paused: false });
       this.start();
     } else {
-      this.setState({ paused: true });
       this.stop();
     }
   };
@@ -407,12 +409,12 @@ class PlayPage extends Component {
         if(this.playMode !== "Normal") return;
         this.gameRecordData = [];
         this.reset();
-        this.playMode = "Record";
+        this.updatPlayMode("Record");
       break;
 
       case "stop-record":
         if(this.playMode !== "Record") return;
-        this.playMode = "Normal";
+        this.updatPlayMode("Normal");
         this.sendMsgToTopWindow({type:"record-data",data:this.getRecordData()});
       break;
 
@@ -420,7 +422,7 @@ class PlayPage extends Component {
         if(this.playMode === "Record") return;
         this.setRecordData(data.data);
         this.reset();
-        this.playMode = "Play";
+        this.updatPlayMode("Play");
       break;
 
       case "loadFormJSON": {
@@ -454,14 +456,12 @@ class PlayPage extends Component {
       break;
 
       case "quickSave":{
-        this.stop();
-          let __nesdata = {
-            cpu: this.nes.cpu.toJSON(),
-            mmap: this.nes.mmap.toJSON(),
-            ppu: this.nes.ppu.toJSON()
-          };
-          this.gameSaveDat = JSON.stringify(__nesdata);
-          this.start();
+        let __nesdata = {
+          cpu: this.nes.cpu.toJSON(),
+          mmap: this.nes.mmap.toJSON(),
+          ppu: this.nes.ppu.toJSON()
+        };
+        this.gameSaveDat = JSON.stringify(__nesdata);
       }
       break;
 
@@ -511,11 +511,6 @@ class PlayPage extends Component {
     let array = this.gameRecordData.concat();
     let json = {};
     json["data"] = array;
-    /*let leng = this.gameRecordData.length;
-    let buf = "";
-    for(let i = 0;i < leng;i ++) {
-      buf += String.fromCharCode(this.gameRecordData[i]);
-    }*/
     let buf = JSON.stringify(json);
     return buf;
   };
@@ -524,10 +519,6 @@ class PlayPage extends Component {
     if(this.playMode === "Record") return;
     let json = JSON.parse(data);
     this.gameRecordData = json["data"];
-    /*let leng = data.length;
-    for(let i = 0;i < leng;i ++) {
-      this.gameRecordData.push(data[i].charCodeAt());
-    }*/
   };
 }
 
