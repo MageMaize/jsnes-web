@@ -2,6 +2,7 @@ import RingBuffer from "ringbufferjs";
 import { handleError } from "./utils";
 
 export default class Speakers {
+  volume = 1;
   constructor({ onBufferUnderrun }) {
     this.onBufferUnderrun = onBufferUnderrun;
     this.bufferSize = 8192;
@@ -35,8 +36,8 @@ export default class Speakers {
     if (this.buffer.size() / 2 >= this.bufferSize) {
       //console.log(`Buffer overrun`);
     }
-    this.buffer.enq(left);
-    this.buffer.enq(right);
+    this.buffer.enq(left * this.volume);
+    this.buffer.enq(right * this.volume);
   };
 
   onaudioprocess = e => {

@@ -7,6 +7,7 @@ const SCREEN_PADDING = 8;
 
 class Screen extends Component {
   ScreenMode = "16:9";
+  isRun = false;
   render() {
     return (
       <canvas

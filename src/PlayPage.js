@@ -51,9 +51,11 @@ function getNesUrl(id,callback) {
 }
 
 class PlayPage extends Component {
+  isRun = false;
   gameSaveDat = null;
   gameRecordData = null;
   playMode = "Normal";
+  romId = -1;
   ramGetters = {};
   ppuGetters = {};
   
@@ -217,6 +219,7 @@ class PlayPage extends Component {
         if(nes.frameCount >= this.gameRecordData.length) {
           this.updatPlayMode("Normal");
           this.reset();
+          this.stop();
           this.sendMsgToTopWindow({type:"record-play-finish"});
           break;
         }
@@ -231,6 +234,7 @@ class PlayPage extends Component {
             controller.state[i] = 0x40;
           }
         }
+        this.sendMsgToTopWindow({type:"play-mode-time",pos:nes.frameCount,length:this.gameRecordData.length});
         break;
       }
       
@@ -300,6 +304,7 @@ class PlayPage extends Component {
   load = () => {
     if (this.props.match.params.id) {
       const id = this.props.match.params.id;
+      this.romId = id;
       let self = this;
       getNesUrl(id,function(error,data){
           if(error) {
@@ -340,12 +345,15 @@ class PlayPage extends Component {
     this.gameSaveDat = null;
     this.nes.loadROM(data);
     this.start();
-    this.sendMsgToTopWindow({type:"game-loaded"});
+    this.sendMsgToTopWindow({type:"game-loaded",romid:this.romId});
   };
 
   start = () => {
-    //if(!this.state.paused) return ;
-    this.setState({ paused: false });
+    if(this.isRun) return ;
+    this.isRun = true;
+    this.screen.isRun = true;
+    //this.setState({ paused: false });
+    //this.screen.reWrite();
     this.frameTimer.start();
     this.speakers.start();
     this.fpsInterval = setInterval(() => {
@@ -366,8 +374,11 @@ class PlayPage extends Component {
   }
 
   stop = () => {
-    //if(this.state.paused) return ;
-    this.setState({ paused: true });
+    if(!this.isRun) return ;
+    this.isRun = false;
+    this.screen.isRun = false;
+    //this.setState({ paused: true });
+    //this.screen.reWrite();
     this.frameTimer.stop();
     this.speakers.stop();
     clearInterval(this.fpsInterval);
@@ -375,11 +386,12 @@ class PlayPage extends Component {
   };
 
   handlePauseResume = () => {
-    if (this.state.paused) {
+    if (!this.isRun) {
       this.start();
     } else {
       this.stop();
     }
+    this.sendMsgToTopWindow({type:"manual-pause",state:this.isRun ? "play" : "pause"});
   };
 
   onWindowMessage = (e)=> {
@@ -390,12 +402,18 @@ class PlayPage extends Component {
         this.handlePauseResume();
       break;
 
+      case "set-volume":
+        let v = Math.max(0,Math.min(data.volume,1));
+        this.speakers.volume = v;
+        this.sendMsgToTopWindow({type:"set-volume",volume:v});
+      break;
+
       case "screen_mode" :
         this.screen.setScreenMode(data.mode);
       break;
 
       case "screenshot" :
-        if(!this.state.paused) {
+        if(this.screen.isRun) {
           let imgSrc = this.screen.screenshotData();
           this.sendMsgToTopWindow({type:"screenshot",img:imgSrc});
         }
@@ -403,17 +421,20 @@ class PlayPage extends Component {
 
       case "reset" :
         this.reset();
+        this.start();
       break;
 
       case "start-record":
         if(this.playMode !== "Normal") return;
         this.gameRecordData = [];
         this.reset();
+        this.start();
         this.updatPlayMode("Record");
       break;
 
       case "stop-record":
         if(this.playMode !== "Record") return;
+        this.stop();
         this.updatPlayMode("Normal");
         this.sendMsgToTopWindow({type:"record-data",data:this.getRecordData()});
       break;
@@ -422,6 +443,7 @@ class PlayPage extends Component {
         if(this.playMode === "Record") return;
         this.setRecordData(data.data);
         this.reset();
+        this.start();
         this.updatPlayMode("Play");
       break;
 
