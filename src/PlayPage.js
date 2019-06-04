@@ -50,6 +50,10 @@ function getNesUrl(id,callback) {
   return req;
 }
 
+document.oncontextmenu = () => {
+  return false;
+}
+
 class PlayPage extends Component {
   isRun = false;
   gameSaveDat = null;
