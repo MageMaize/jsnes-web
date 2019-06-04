@@ -172,7 +172,7 @@ class PlayPage extends Component {
       onWriteFrame: Raven.wrap(this.screen.writeBuffer)
     });
 
-    window.addEventListener("message",this.onWindowMessage);
+    window.addEventListener("message",this.onWindowMessage.bind(this));
 
     this.keyboardController = new KeyboardController({
       onButtonDown: this.nes.buttonDown,
