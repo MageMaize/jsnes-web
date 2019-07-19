@@ -536,6 +536,9 @@ class PlayPage extends Component {
     if(this.gameRecordData == null) return null;
     let array = this.gameRecordData.concat();
     let json = {};
+    json["type"] = "MimoeNES Replay File";
+    json["version"] = 1;
+    json["romid"] = this.romId;
     json["data"] = array;
     let buf = JSON.stringify(json);
     return buf;
@@ -543,9 +546,25 @@ class PlayPage extends Component {
 
   setRecordData = (data) => {
     if(this.playMode === "Record") return;
-    let json = JSON.parse(data);
-    this.gameRecordData = json["data"];
+    try {
+      let json = JSON.parse(data);
+      if(json["type"] != "MimoeNES Replay File") {
+        throw "Replay Json Type Error!";
+      };
+      if(json["romid"] != this.romId) {
+        throw "Replay ROM id Error!";
+      }
+      this.gameRecordData = json["data"];
+    }
+    catch(e) {
+      this.sendError(e);
+      return;
+    }
   };
+
+  sendError = (str) => {
+    this.sendMsgToTopWindow({type:"error",msg:str});
+  }
 }
 
 export default PlayPage;
