@@ -548,10 +548,14 @@ class PlayPage extends Component {
     if(this.playMode === "Record") return;
     try {
       let json = JSON.parse(data);
+      // eslint-disable-next-line
       if(json["type"] != "MimoeNES Replay File") {
+        // eslint-disable-next-line
         throw "Replay Json Type Error!";
       };
+      // eslint-disable-next-line
       if(json["romid"] != this.romId) {
+        // eslint-disable-next-line
         throw "Replay ROM id Error!";
       }
       this.gameRecordData = json["data"];
