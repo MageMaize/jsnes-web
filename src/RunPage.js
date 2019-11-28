@@ -206,7 +206,7 @@ class RunPage extends Component {
   load = () => {
     if (this.props.match.params.name) {
       const romName = this.props.match.params.name;
-      const path = "http://static.magecorn.com/nes/" + romName;
+      const path = "//static.magecorn.com/nes/" + romName;
       this.currentRequest = loadBinary(
         path,
         (err, data) => {

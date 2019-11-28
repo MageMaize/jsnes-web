@@ -31,7 +31,7 @@ function loadBinary(path, callback, handleProgress) {
 
 function getNesUrl(id,callback) {
   var req = new XMLHttpRequest();
-  var path = "http://api.magecorn.com/nes/getUrl";
+  var path = "//api.magecorn.com/nes/getUrl";
   req.open("POST", path);
   req.overrideMimeType("text/plain; charset=x-user-defined");
   req.onload = function() {
@@ -317,8 +317,8 @@ class PlayPage extends Component {
               if(data === "") {
                   window.alert(`Error loading ROM`);
               } else {
-                  //const path = data;
-                  const path = "http://nesplay.magecorn.net:8008/1943.nes";
+                  const path = data;
+                  // const path = "//nesplay.magecorn.net:8008/1943.nes";
                   self.currentRequest = loadBinary(
                     path,
                     (err, data) => {
